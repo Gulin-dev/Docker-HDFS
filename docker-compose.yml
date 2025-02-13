@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  hdfs:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: hdfs
+    environment:
+      - CLUSTER_NAME=test_hdfs
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    volumes:
+      - hdfs_namenode:/hadoop/dfs/name
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode
+    environment:
+      - SERVICE_PRECONDITION=hdfs:9000
+    volumes:
+      - hdfs_datanode:/hadoop/dfs/data
+    depends_on:
+      - hdfs
+
+  python_worker:
+    build: .
+    container_name: python_worker
+    depends_on:
+      hdfs:
+        condition: service_started
+    volumes:
+      - ./data:/app/data
+    command: ["python", "script.py"]
+
+volumes:
+  hdfs_namenode:
+  hdfs_datanode:
